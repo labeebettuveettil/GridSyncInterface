@@ -1,0 +1,1894 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GridSync Interface</title>
+  <style>
+    /* ?? Reset & Variables ??????????????????????????????????????????????? */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:          #f0f2f8;
+      --surface:     #ffffff;
+      --sidebar-bg:  #1a2035;
+      --sidebar-w:   260px;
+      --accent:      #4f46e5;
+      --accent-h:    #4338ca;
+      --accent-lt:   #eef2ff;
+      --success:     #10b981;
+      --danger:      #ef4444;
+      --warning:     #f59e0b;
+      --text:        #1e293b;
+      --text-muted:  #64748b;
+      --border:      #e2e8f0;
+      --radius:      10px;
+      --shadow:      0 4px 24px rgba(0,0,0,.08);
+      --transition:  .18s ease;
+    }
+    html, body { height: 100%; font-family: 'Segoe UI', system-ui, sans-serif; color: var(--text); background: var(--bg); }
+
+    /* ?? Login ??????????????????????????????????????????????????????????? */
+    #login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a2035 0%, #2d3561 100%);
+    }
+    .login-card {
+      background: var(--surface); border-radius: 18px; padding: 48px 40px;
+      width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    }
+    .login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+    .login-logo .logo-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--accent); display: flex; align-items: center; justify-content: center;
+    }
+    .login-logo .logo-icon svg { width: 24px; height: 24px; fill: #fff; }
+    .login-logo h1 { font-size: 22px; font-weight: 700; color: var(--text); }
+    .login-logo p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 14px; color: var(--text);
+      background: var(--surface); transition: border-color var(--transition);
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79,70,229,.15);
+    }
+    .form-group textarea { resize: vertical; min-height: 72px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 20px; border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 600; cursor: pointer; transition: background var(--transition), transform .1s;
+      text-decoration: none;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-h); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger  { background: var(--danger); color: #fff; }
+    .btn-danger:hover  { background: #dc2626; }
+    .btn-ghost   { background: transparent; color: var(--text-muted); border: 1.5px solid var(--border); }
+    .btn-ghost:hover   { background: var(--bg); color: var(--text); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-full { width: 100%; justify-content: center; }
+    .btn-icon { padding: 7px; }
+
+    /* ?? App Shell ??????????????????????????????????????????????????????? */
+    #app { display: none; height: 100vh; overflow: hidden; }
+    #app.visible { display: flex; }
+
+    /* ?? Sidebar ????????????????????????????????????????????????????????? */
+    .sidebar {
+      width: var(--sidebar-w); background: var(--sidebar-bg);
+      display: flex; flex-direction: column; flex-shrink: 0;
+      overflow-y: auto; color: #c8d0e7;
+    }
+    .sidebar-header {
+      padding: 22px 20px 18px; display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .sidebar-header .logo-icon {
+      width: 36px; height: 36px; background: var(--accent);
+      border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .sidebar-header .logo-icon svg { width: 20px; height: 20px; fill: #fff; }
+    .sidebar-header .app-name { font-size: 15px; font-weight: 700; color: #fff; }
+    .sidebar-header .app-sub  { font-size: 11px; color: #7c87a6; margin-top: 1px; }
+
+    .project-badge {
+      margin: 14px 16px 6px;
+      background: rgba(79,70,229,.18); border: 1px solid rgba(79,70,229,.3);
+      border-radius: 8px; padding: 10px 12px;
+    }
+    .project-badge .label { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: #7c87a6; }
+    .project-badge .name  { font-size: 13px; font-weight: 600; color: #c8d0e7; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .sidebar-section-title {
+      padding: 16px 20px 6px; font-size: 10px; text-transform: uppercase;
+      letter-spacing: 1px; color: #4a5568; font-weight: 700;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 20px; font-size: 13.5px; font-weight: 500;
+      color: #8a95b3; cursor: pointer; border-radius: 0;
+      transition: background var(--transition), color var(--transition);
+      user-select: none;
+    }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .7; }
+    .nav-item:hover  { background: rgba(255,255,255,.06); color: #c8d0e7; }
+    .nav-item.active { background: rgba(79,70,229,.22); color: #fff; }
+    .nav-item.active svg { opacity: 1; }
+
+    .sidebar-footer {
+      margin-top: auto; border-top: 1px solid rgba(255,255,255,.07);
+      padding: 14px 16px;
+    }
+    .user-badge {
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+    }
+    .user-avatar {
+      width: 34px; height: 34px; border-radius: 50%; background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .user-info .u-name { font-size: 13px; font-weight: 600; color: #c8d0e7; }
+    .user-info .u-role { font-size: 11px; color: #7c87a6; }
+
+    /* ?? Main Content ???????????????????????????????????????????????????? */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    .topbar {
+      height: 60px; background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 28px; gap: 12px; flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+    .topbar-title { font-size: 17px; font-weight: 700; flex: 1; }
+    .topbar-actions { display: flex; gap: 8px; }
+
+    .content { flex: 1; overflow-y: auto; padding: 28px; }
+
+    /* ?? Cards ??????????????????????????????????????????????????????????? */
+    .card {
+      background: var(--surface); border-radius: var(--radius);
+      box-shadow: var(--shadow); border: 1px solid var(--border);
+    }
+    .card-header {
+      padding: 18px 22px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-header h2 { font-size: 15px; font-weight: 700; flex: 1; }
+    .card-body { padding: 20px 22px; }
+
+    /* ?? Project Grid ???????????????????????????????????????????????????? */
+    .projects-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px;
+    }
+    .project-card {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 20px; cursor: pointer;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .project-card:hover { border-color: var(--accent); box-shadow: 0 4px 20px rgba(79,70,229,.12); }
+    .project-card .pc-name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .project-card .pc-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; min-height: 36px; }
+    .project-card .pc-meta { font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 14px; }
+    .project-card .pc-actions { display: flex; gap: 8px; }
+
+    /* ?? Data Table ?????????????????????????????????????????????????????? */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .data-table th {
+      text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted);
+      background: var(--bg); border-bottom: 2px solid var(--border);
+    }
+    .data-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f8fafc; }
+    .data-table .actions { display: flex; gap: 6px; }
+
+    /* ?? Badge ??????????????????????????????????????????????????????????? */
+    .badge {
+      display: inline-flex; align-items: center; padding: 2px 9px;
+      border-radius: 99px; font-size: 11px; font-weight: 600;
+    }
+    .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+    .badge-green  { background: #d1fae5; color: #065f46; }
+    .badge-purple { background: #ede9fe; color: #5b21b6; }
+    .badge-gray   { background: #f1f5f9; color: #475569; }
+
+    /* ?? Section Tabs ???????????????????????????????????????????????????? */
+    .section-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 22px; }
+    .tab-btn {
+      padding: 10px 20px; font-size: 13.5px; font-weight: 600;
+      color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -2px; transition: color var(--transition), border-color var(--transition);
+      background: none; border-top: none; border-left: none; border-right: none;
+    }
+    .tab-btn.active  { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn:hover   { color: var(--text); }
+
+    /* ?? Modals ?????????????????????????????????????????????????????????? */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: none; align-items: center; justify-content: center; z-index: 1000;
+      backdrop-filter: blur(3px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: 16px; padding: 32px;
+      width: 480px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 24px 80px rgba(0,0,0,.2); animation: slideUp .2s ease;
+    }
+    .modal-lg { width: 640px; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .modal-header h3 { font-size: 18px; font-weight: 700; }
+    .modal-close { background: none; border: none; font-size: 22px; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 2px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+    /* ?? Toast ??????????????????????????????????????????????????????????? */
+    #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+    .toast {
+      min-width: 280px; padding: 14px 18px; border-radius: 10px;
+      font-size: 13.5px; font-weight: 500; color: #fff;
+      box-shadow: 0 4px 20px rgba(0,0,0,.2); animation: fadeIn .25s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    .toast.success { background: var(--success); }
+    .toast.error   { background: var(--danger); }
+    .toast.info    { background: var(--accent); }
+
+    /* ?? Empty State ????????????????????????????????????????????????????? */
+    .empty-state {
+      text-align: center; padding: 48px 24px; color: var(--text-muted);
+    }
+    .empty-state svg { width: 56px; height: 56px; opacity: .3; margin-bottom: 16px; }
+    .empty-state p { font-size: 14px; margin-bottom: 16px; }
+
+    /* ?? Breadcrumb ?????????????????????????????????????????????????????? */
+    .breadcrumb { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-bottom: 18px; }
+    .breadcrumb span { cursor: pointer; }
+    .breadcrumb span:hover { color: var(--accent); }
+    .breadcrumb .sep { opacity: .4; }
+
+    /* ?? Loader ?????????????????????????????????????????????????????????? */
+    .loader { display: flex; align-items: center; justify-content: center; padding: 40px; }
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ?? Dashboard Stats ????????????????????????????????????????????????? */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+    .stat-card .s-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); }
+    .stat-card .s-value { font-size: 28px; font-weight: 800; color: var(--text); margin-top: 4px; }
+    .stat-card .s-sub   { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ?? Tree ???????????????????????????????????????????????????????????? */
+    .tree-node { padding: 8px 12px 8px 14px; display: flex; align-items: center; gap: 8px; border-radius: 7px; cursor: pointer; font-size: 13.5px; transition: background var(--transition); }
+    .tree-node:hover { background: var(--accent-lt); }
+    .tree-node.selected { background: var(--accent-lt); font-weight: 600; color: var(--accent); }
+    .tree-node .ti { width: 14px; height: 14px; opacity: .6; }
+    .tree-children { margin-left: 22px; border-left: 1.5px solid var(--border); padding-left: 8px; }
+
+    /* ?? Detail Panel ???????????????????????????????????????????????????? */
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
+    .detail-item .di-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+    .detail-item .di-value { font-size: 14px; color: var(--text); font-weight: 500; }
+
+    /* ?? Tag ????????????????????????????????????????????????????????????? */
+    .tag { display: inline-block; background: var(--accent-lt); color: var(--accent); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 5px; margin: 2px; }
+
+    /* ?? Responsive ?????????????????????????????????????????????????????? */
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 0px; }
+      .sidebar { display: none; }
+    }
+
+    /* ?? User Management ??????????????????????????????????????????????????? */
+    .badge-red    { background: #fee2e2; color: #991b1b; }
+    .badge-orange { background: #ffedd5; color: #9a3412; }
+
+    .user-mgmt-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+
+    .toggle-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 10px; border-radius: 6px; font-size: 11px;
+      font-weight: 700; cursor: pointer; border: none; transition: background var(--transition);
+    }
+    .toggle-btn.active  { background: #d1fae5; color: #065f46; }
+    .toggle-btn.inactive{ background: #fee2e2; color: #991b1b; }
+    .toggle-btn:hover   { opacity: .8; }
+
+    .role-select {
+      padding: 3px 8px; border: 1.5px solid var(--border); border-radius: 6px;
+      font-size: 12px; font-weight: 600; background: var(--surface); cursor: pointer;
+    }
+
+    .user-row-self { background: #f5f3ff !important; }
+    .user-row-self td { border-left: 3px solid var(--accent); }
+  </style>
+</head>
+<body>
+
+<!-- ?? Login Screen ???????????????????????????????????????????????????????? -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div>
+        <h1>GridSync</h1>
+        <p>IEC 61850 Configuration Interface</p>
+      </div>
+    </div>
+    <form id="login-form">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="login-username" required autocomplete="username" placeholder="Enter your username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" required autocomplete="current-password" placeholder="Enter your password" />
+      </div>
+      <div id="login-error" style="color:var(--danger);font-size:13px;margin-bottom:12px;display:none;"></div>
+      <button type="submit" class="btn btn-primary btn-full" id="login-btn">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- ?? App Shell ??????????????????????????????????????????????????????????? -->
+<div id="app">
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+      <div><div class="app-name">GridSync</div><div class="app-sub">IEC 61850 Editor</div></div>
+    </div>
+
+    <div id="project-badge-wrap" style="display:none">
+      <div class="project-badge">
+        <div class="label">Active Project</div>
+        <div class="name" id="active-project-name">�</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section-title">Workspace</div>
+    <div class="nav-item active" data-view="dashboard" onclick="navigate('dashboard')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+      Dashboard
+    </div>
+
+    <div id="project-nav" style="display:none">
+      <div class="sidebar-section-title">Project</div>
+      <div class="nav-item" data-view="ieds" onclick="navigate('ieds')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+        IEDs
+      </div>
+      <div class="nav-item" data-view="substation" onclick="navigate('substation')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        Substation
+      </div>
+      <div class="nav-item" data-view="communication" onclick="navigate('communication')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        Communication
+      </div>
+      <div class="nav-item" data-view="datasets" onclick="navigate('datasets')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg>
+        Data Sets
+      </div>
+      <div class="nav-item" data-view="datatypes" onclick="navigate('datatypes')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+        Data Type Templates
+      </div>
+      <div class="nav-item" data-view="audit" onclick="navigate('audit')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05V4.05C17.39 4.59 20.5 8.58 19.96 12.97C19.5 16.61 16.64 19.5 13 19.93V21.93C18.5 21.38 22.5 16.5 21.95 11C21.5 6.25 17.73 2.5 13 2.05M11 2.06C9.05 2.25 7.19 3 5.67 4.26L7.1 5.74C8.22 4.84 9.57 4.26 11 4.06V2.06M4.26 5.67C3 7.19 2.25 9.05 2.05 11H4.05C4.24 9.58 4.8 8.23 5.69 7.1L4.26 5.67M2.06 13C2.26 14.96 3.03 16.81 4.27 18.33L5.69 16.9C4.81 15.77 4.24 14.42 4.06 13H2.06M7.1 18.37L5.67 19.74C7.18 21 9.04 21.79 11 22V20C9.58 19.82 8.23 19.25 7.1 18.37M12 7L7 12H10V16H14V12H17L12 7Z"/></svg>
+        Audit Log
+      </div>
+    </div>
+
+    <!-- Admin-only section — shown/hidden by showApp() -->
+    <div id="admin-nav" style="display:none">
+      <div class="sidebar-section-title">Administration</div>
+      <div class="nav-item" data-view="users" onclick="navigate('users')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        User Management
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div class="user-info">
+          <div class="u-name" id="user-name">Loading...</div>
+          <div class="u-role" id="user-role"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm btn-icon" style="margin-left:auto" onclick="logout()" title="Logout">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-actions" id="topbar-actions"></div>
+    </div>
+    <div class="content" id="content-area"></div>
+  </div>
+</div>
+
+<!-- ?? Toast Container ????????????????????????????????????????????????????? -->
+<div id="toast-container"></div>
+
+<!-- ?? Modals ??????????????????????????????????????????????????????????????? -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="modal-title">Modal</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<script>
+/* ???????????????????????????????????????????????????????????????????????????
+   STATE
+??????????????????????????????????????????????????????????????????????????? */
+const S = {
+  token: localStorage.getItem('gs_token') || null,
+  refreshToken: localStorage.getItem('gs_refresh') || null,
+  user: null,
+  project: null,   // current ProjectDto
+  currentView: 'dashboard',
+};
+
+/* ???????????????????????????????????????????????????????????????????????????
+   API
+??????????????????????????????????????????????????????????????????????????? */
+const API = '/api';
+
+async function apiFetch(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (S.token) headers['Authorization'] = `Bearer ${S.token}`;
+  const res = await fetch(`${API}${path}`, { ...opts, headers });
+  if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+  if (!res.ok) {
+    let msg = `Error ${res.status}`;
+    try { const j = await res.json(); msg = j.title || j.message || j.detail || JSON.stringify(j); } catch {}
+    throw new Error(msg);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+const get  = (path)        => apiFetch(path);
+const post = (path, body)  => apiFetch(path, { method: 'POST', body: JSON.stringify(body) });
+const put  = (path, body)  => apiFetch(path, { method: 'PUT',  body: JSON.stringify(body) });
+const del  = (path)        => apiFetch(path, { method: 'DELETE' });
+
+/* ???????????????????????????????????????????????????????????????????????????
+   TOAST
+??????????????????????????????????????????????????????????????????????????? */
+function toast(msg, type = 'info') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+/* ???????????????????????????????????????????????????????????????????????????
+   MODAL
+??????????????????????????????????????????????????????????????????????????? */
+function openModal(title, bodyHTML, actions, large = false) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHTML;
+  const ac = document.getElementById('modal-actions');
+  ac.innerHTML = '';
+  (actions || []).forEach(a => {
+    const b = document.createElement('button');
+    b.className = `btn ${a.cls || 'btn-primary'}`;
+    b.textContent = a.label;
+    b.onclick = a.fn;
+    ac.appendChild(b);
+  });
+  const box = document.getElementById('modal-box');
+  box.className = large ? 'modal modal-lg' : 'modal';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(ev) {
+  if (ev && ev.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+/* ???????????????????????????????????????????????????????????????????????????
+   AUTH
+??????????????????????????????????????????????????????????????????????????? */
+document.getElementById('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  btn.textContent = 'Signing in...'; btn.disabled = true;
+  try {
+    const res = await post('/auth/login', {
+      username: document.getElementById('login-username').value,
+      password: document.getElementById('login-password').value,
+    });
+    S.token = res.accessToken;
+    S.refreshToken = res.refreshToken;
+    S.user = res.user;
+    localStorage.setItem('gs_token', S.token);
+    localStorage.setItem('gs_refresh', S.refreshToken);
+    showApp();
+  } catch (err) {
+    errEl.textContent = err.message; errEl.style.display = 'block';
+  } finally {
+    btn.textContent = 'Sign In'; btn.disabled = false;
+  }
+});
+
+function logout() {
+  S.token = S.refreshToken = S.user = S.project = null;
+  localStorage.removeItem('gs_token'); localStorage.removeItem('gs_refresh');
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-password').value = '';
+}
+
+function showUserMenu() {
+  // Reserved for a future profile pop-up; logout button is always visible in sidebar.
+}
+
+async function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  if (!S.user) {
+    try { S.user = await get('/auth/me'); } catch {}
+  }
+  try {
+    if (S.user) {
+      const name     = S.user.fullName || S.user.username || '';
+      const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+      const avatarEl = document.getElementById('user-avatar');
+      const nameEl   = document.getElementById('user-name');
+      const roleEl   = document.getElementById('user-role');
+      const adminNav = document.getElementById('admin-nav');
+      if (avatarEl) { avatarEl.textContent = initials; avatarEl.style.background = roleColor(S.user.role); }
+      if (nameEl)   nameEl.textContent = name;
+      if (roleEl)   roleEl.textContent = S.user.role;
+      if (adminNav) adminNav.style.display = S.user.role === 'Admin' ? 'block' : 'none';
+    }
+  } catch (uiErr) {
+    console.warn('showApp UI init error:', uiErr);
+  }
+  navigate('dashboard');
+}
+
+/* ???????????????????????????????????????????????????????????????????????????
+   NAVIGATION
+??????????????????????????????????????????????????????????????????????????? */
+function navigate(view, ...args) {
+  S.currentView = view;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const active = document.querySelector(`.nav-item[data-view="${view}"]`);
+  if (active) active.classList.add('active');
+  const views = { dashboard, ieds, substation, communication, datasets, datatypes, audit, users };
+  if (views[view]) views[view](...args);
+}
+
+/* ???????????????????????????????????????????????????????????????????????????
+   HELPERS
+??????????????????????????????????????????????????????????????????????????? */
+function setContent(html) {
+  document.getElementById('content-area').innerHTML = html;
+}
+function setTopbar(title, actionsHTML = '') {
+  document.getElementById('topbar-title').textContent = title;
+  document.getElementById('topbar-actions').innerHTML = actionsHTML;
+}
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString() : '�'; }
+function fmtDateTime(d) { return d ? new Date(d).toLocaleString() : '�'; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function tableRow(cells, actions) {
+  return `<tr>${cells.map(c=>`<td>${esc(c)}</td>`).join('')}<td><div class="actions">${actions}</div></td></tr>`;
+}
+
+function loader() { return '<div class="loader"><div class="spinner"></div></div>'; }
+
+function emptyState(msg) {
+  return `<div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2C7.9 2 7 2.9 7 4H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3c0-1.1-.9-2-2-2H9zm0 2h6v2H9V4zm-5 4h16v14H4V8z"/></svg>
+    <p>${msg}</p></div>`;
+}
+
+function openProject(projJson) {
+  const proj = typeof projJson === 'string' ? JSON.parse(projJson) : projJson;
+  S.project  = proj;
+  document.getElementById('project-badge-wrap').style.display = 'block';
+  document.getElementById('project-nav').style.display = 'block';
+  document.getElementById('active-project-name').textContent = proj.name;
+  navigate('ieds');
+}
+
+/* ???????????????????????????????????????????????????????????????????????????
+   DASHBOARD
+??????????????????????????????????????????????????????????????????????????? */
+async function dashboard() {
+  setTopbar('Dashboard', `<button class="btn btn-primary btn-sm" onclick="showCreateProject()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+    New Project
+  </button>`);
+  setContent(loader());
+  try {
+    const projects = await get('/projects');
+    let cards = '';
+    projects.forEach(p => {
+      cards += `<div class="project-card" onclick="openProject(${JSON.stringify(JSON.stringify(p))})">
+        <div class="pc-name">${esc(p.name)}</div>
+        <div class="pc-desc">${esc(p.description || 'No description')}</div>
+        <div class="pc-meta">
+          <span>By ${esc(p.createdBy)}</span>
+          <span>${fmtDate(p.createdAt)}</span>
+        </div>
+        <div class="pc-actions">
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openProject(${JSON.stringify(JSON.stringify(p))})">Open</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();showEditProject(${JSON.stringify(JSON.stringify(p))})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteProject(${p.id},'${esc(p.name)}')">Delete</button>
+        </div>
+      </div>`;
+    });
+    setContent(`
+      <div class="stats-row">
+        <div class="stat-card"><div class="s-label">Total Projects</div><div class="s-value">${projects.length}</div></div>
+        <div class="stat-card"><div class="s-label">Active User</div><div class="s-value" style="font-size:18px">${esc(S.user?.username||'')}</div></div>
+        <div class="stat-card"><div class="s-label">Role</div><div class="s-value" style="font-size:18px">${esc(S.user?.role||'')}</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Projects</h2>
+          <button class="btn btn-primary btn-sm" onclick="showCreateProject()">+ New Project</button>
+        </div>
+        <div class="card-body">
+          ${projects.length ? `<div class="projects-grid">${cards}</div>` : emptyState('No projects yet. Create your first project.')}
+        </div>
+      </div>`);
+  } catch (e) { toast(e.message, 'error'); setContent('<p>Failed to load projects.</p>'); }
+}
+
+function showCreateProject() {
+  openModal('Create New Project', `
+    <div class="form-group"><label>Project Name *</label><input id="m-pname" type="text" placeholder="e.g. Substation Alpha" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-pdesc" placeholder="Optional description..."></textarea></div>`,
+    [{ label: 'Cancel', cls: 'btn-ghost', fn: ()=>closeModal() },
+     { label: 'Create Project', fn: async ()=>{ try {
+       const p = await post('/projects', { name: document.getElementById('m-pname').value, description: document.getElementById('m-pdesc').value });
+       toast('Project created', 'success'); closeModal(); document.getElementById('modal-overlay').classList.remove('open'); dashboard();
+     } catch(e){ toast(e.message,'error'); }}}]);
+}
+
+function showEditProject(pJson) {
+  const p = typeof pJson === 'string' ? JSON.parse(pJson) : pJson;
+  openModal('Edit Project', `
+    <div class="form-group"><label>Project Name *</label><input id="m-pname" type="text" value="${esc(p.name)}" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-pdesc">${esc(p.description||'')}</textarea></div>`,
+    [{ label: 'Cancel', cls: 'btn-ghost', fn: ()=>closeModal() },
+     { label: 'Save Changes', fn: async ()=>{ try {
+       await put(`/projects/${p.id}`, { name: document.getElementById('m-pname').value, description: document.getElementById('m-pdesc').value, rowVersion: p.rowVersion });
+       toast('Project updated', 'success'); closeModal(); dashboard();
+     } catch(e){ toast(e.message,'error'); }}}]);
+}
+
+async function deleteProject(id, name) {
+  if (!confirm(`Delete project "${name}"? This cannot be undone.`)) return;
+  try { await del(`/projects/${id}`); toast('Project deleted'); dashboard(); } catch(e){ toast(e.message,'error'); }
+}
+
+/* ???????????????????????????????????????????????????????????????????????????
+   IEDS VIEW
+??????????????????????????????????????????????????????????????????????????? */
+async function ieds() {
+  if (!S.project) { navigate('dashboard'); return; }
+  const pid = S.project.id;
+  setTopbar(`IEDs � ${S.project.name}`, `
+    <button class="btn btn-primary btn-sm" onclick="showCreateIED()">+ Add IED</button>
+    <button class="btn btn-ghost btn-sm" onclick="showSaveProject()">?? Save Project</button>`);
+  setContent(loader());
+  try {
+    const list = await get(`/projects/${pid}/ieds`);
+    let rows = '';
+    list.forEach(d => {
+      rows += `<tr>
+        <td><strong>${esc(d.name)}</strong></td>
+        <td>${esc(d.iedType||'�')}</td>
+        <td>${esc(d.manufacturer||'�')}</td>
+        <td>${esc(d.configVersion||'�')}</td>
+        <td>${esc(d.desc||'�')}</td>
+        <td>
+          <div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="showLDevicesPanel(${d.id},'${esc(d.name)}')">Logical Devices</button>
+            <button class="btn btn-ghost btn-sm" onclick="showEditIED(${JSON.stringify(JSON.stringify(d))})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteIED(${d.id},'${esc(d.name)}')">Del</button>
+          </div>
+        </td>
+      </tr>`;
+    });
+    setContent(`
+      <div class="breadcrumb"><span onclick="navigate('dashboard')">Dashboard</span><span class="sep">/</span><span>${esc(S.project.name)}</span><span class="sep">/</span><span>IEDs</span></div>
+      <div class="card">
+        <div class="card-header"><h2>Intelligent Electronic Devices</h2><span class="badge badge-blue">${list.length} IEDs</span></div>
+        <div class="card-body" style="padding:0">
+          ${list.length ? `<table class="data-table">
+            <thead><tr><th>Name</th><th>Type</th><th>Manufacturer</th><th>Config Ver</th><th>Description</th><th>Actions</th></tr></thead>
+            <tbody>${rows}</tbody></table>` : emptyState('No IEDs yet. Add your first IED.')}
+        </div>
+      </div>`);
+  } catch (e) { toast(e.message,'error'); }
+}
+
+function showCreateIED() {
+  openModal('Add IED', `
+    <div class="form-group"><label>Name *</label><input id="m-name" type="text" placeholder="e.g. IED1" /></div>
+    <div class="form-group"><label>IED Type</label><input id="m-type" type="text" placeholder="e.g. REL670" /></div>
+    <div class="form-group"><label>Manufacturer</label><input id="m-mfr" type="text" placeholder="e.g. ABB" /></div>
+    <div class="form-group"><label>Config Version</label><input id="m-cfgv" type="text" placeholder="e.g. 1.0" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc"></textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Create IED', fn: async()=>{ try {
+       await post(`/projects/${S.project.id}/ieds`, {
+         name:document.getElementById('m-name').value,
+         iedType:document.getElementById('m-type').value||undefined,
+         manufacturer:document.getElementById('m-mfr').value||undefined,
+         configVersion:document.getElementById('m-cfgv').value||undefined,
+         desc:document.getElementById('m-desc').value||undefined,
+       });
+       toast('IED created','success'); closeModal(); ieds();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+function showEditIED(dJson) {
+  const d = typeof dJson==='string'?JSON.parse(dJson):dJson;
+  openModal('Edit IED', `
+    <div class="form-group"><label>Name *</label><input id="m-name" value="${esc(d.name)}" /></div>
+    <div class="form-group"><label>IED Type</label><input id="m-type" value="${esc(d.iedType||'')}" /></div>
+    <div class="form-group"><label>Manufacturer</label><input id="m-mfr" value="${esc(d.manufacturer||'')}" /></div>
+    <div class="form-group"><label>Config Version</label><input id="m-cfgv" value="${esc(d.configVersion||'')}" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc">${esc(d.desc||'')}</textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Save', fn: async()=>{ try {
+       await put(`/projects/${S.project.id}/ieds/${d.id}`, { payload:{
+         name:document.getElementById('m-name').value,
+         iedType:document.getElementById('m-type').value||undefined,
+         manufacturer:document.getElementById('m-mfr').value||undefined,
+         configVersion:document.getElementById('m-cfgv').value||undefined,
+         desc:document.getElementById('m-desc').value||undefined,
+       }, rowVersion: d.rowVersion });
+       toast('IED updated','success'); closeModal(); ieds();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+async function deleteIED(id,name) {
+  if(!confirm(`Delete IED "${name}"?`)) return;
+  try { await del(`/projects/${S.project.id}/ieds/${id}`); toast('IED deleted'); ieds(); }catch(e){toast(e.message,'error');}
+}
+
+/* ??? Logical Devices ???????????????????????????????????????????????????? */
+async function showLDevicesPanel(iedId, iedName) {
+  const pid = S.project.id;
+  setTopbar(`IEDs � ${S.project.name}`, `<button class="btn btn-ghost btn-sm" onclick="ieds()">? Back to IEDs</button>`);
+  setContent(loader());
+  try {
+    // Get servers (access points ? servers) � for simplicity we use ied's servers via ldevices with serverId search
+    // The API for ldevices needs a serverId; since we don't have a direct IED?servers endpoint, show a prompt for serverId
+    setContent(`
+      <div class="breadcrumb">
+        <span onclick="navigate('dashboard')">Dashboard</span><span class="sep">/</span>
+        <span onclick="ieds()">IEDs</span><span class="sep">/</span>
+        <span>${esc(iedName)}</span>
+      </div>
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-header"><h2>Access Point / Server</h2></div>
+        <div class="card-body">
+          <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">To manage Logical Devices, enter the Server ID (obtained from your database or API).</p>
+          <div style="display:flex;gap:10px;align-items:flex-end">
+            <div class="form-group" style="margin:0;flex:1"><label>Server ID</label><input id="server-id-input" type="number" placeholder="e.g. 1" /></div>
+            <button class="btn btn-primary" onclick="loadLDevices(${iedId},'${esc(iedName)}')">Load Logical Devices</button>
+          </div>
+          <div id="ldevices-panel" style="margin-top:20px"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Logical Nodes (Project-wide)</h2>
+          <button class="btn btn-primary btn-sm" onclick="showCreateLN()">+ Add Logical Node</button>
+        </div>
+        <div class="card-body" style="padding:0" id="ln-list">${loader()}</div>
+      </div>`);
+    loadProjectLNs();
+  }catch(e){toast(e.message,'error');}
+}
+
+async function loadLDevices(iedId, iedName) {
+  const sid = document.getElementById('server-id-input')?.value;
+  if (!sid) { toast('Enter a Server ID','error'); return; }
+  const pid = S.project.id;
+  const panel = document.getElementById('ldevices-panel');
+  panel.innerHTML = loader();
+  try {
+    const list = await get(`/projects/${pid}/servers/${sid}/ldevices`);
+    let rows = '';
+    list.forEach(d => {
+      rows += `<tr>
+        <td><strong>${esc(d.inst)}</strong></td>
+        <td>${esc(d.ldName||'�')}</td>
+        <td>${esc(d.desc||'�')}</td>
+        <td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="showLNsForLDevice(${d.id},'${esc(d.inst)}')">Logical Nodes</button>
+          <button class="btn btn-ghost btn-sm" onclick="showEditLDevice(${JSON.stringify(JSON.stringify(d))})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteLDevice(${d.id},'${esc(d.inst)}',${iedId},'${esc(iedName)}')">Del</button>
+        </div></td>
+      </tr>`;
+    });
+    panel.innerHTML = `
+      <div class="card-header" style="padding:0 0 12px 0;border-bottom:none;margin-bottom:4px">
+        <h2 style="font-size:14px">Logical Devices (Server ${sid})</h2>
+        <button class="btn btn-primary btn-sm" onclick="showCreateLDevice(${sid})">+ Add Logical Device</button>
+      </div>
+      ${list.length ? `<table class="data-table"><thead><tr><th>Inst</th><th>LD Name</th><th>Desc</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>` : emptyState('No logical devices. Add one.')}`;
+  }catch(e){toast(e.message,'error'); panel.innerHTML='';}
+}
+
+function showCreateLDevice(serverId) {
+  openModal('Add Logical Device', `
+    <div class="form-group"><label>Server ID</label><input id="m-srv" type="number" value="${serverId}" /></div>
+    <div class="form-group"><label>Inst *</label><input id="m-inst" type="text" placeholder="e.g. LD0" /></div>
+    <div class="form-group"><label>LD Name</label><input id="m-ldname" type="text" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc"></textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Create', fn: async()=>{ try {
+       await post(`/projects/${S.project.id}/ldevices`, {
+         serverId: +document.getElementById('m-srv').value,
+         inst: document.getElementById('m-inst').value,
+         ldName: document.getElementById('m-ldname').value||undefined,
+         desc: document.getElementById('m-desc').value||undefined,
+       });
+       toast('Logical Device created','success'); closeModal();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+function showEditLDevice(dJson) {
+  const d = typeof dJson==='string'?JSON.parse(dJson):dJson;
+  openModal('Edit Logical Device', `
+    <div class="form-group"><label>Inst *</label><input id="m-inst" value="${esc(d.inst)}" /></div>
+    <div class="form-group"><label>LD Name</label><input id="m-ldname" value="${esc(d.ldName||'')}" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc">${esc(d.desc||'')}</textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Save', fn: async()=>{ try {
+       await put(`/projects/${S.project.id}/ldevices/${d.id}`, { payload:{
+         serverId: d.serverId,
+         inst: document.getElementById('m-inst').value,
+         ldName: document.getElementById('m-ldname').value||undefined,
+         desc: document.getElementById('m-desc').value||undefined,
+       }, rowVersion: d.rowVersion });
+       toast('Logical Device updated','success'); closeModal();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+async function deleteLDevice(id, name, iedId, iedName) {
+  if(!confirm(`Delete Logical Device "${name}"?`)) return;
+  try { await del(`/projects/${S.project.id}/ldevices/${id}`); toast('Deleted'); loadLDevices(iedId, iedName); }catch(e){toast(e.message,'error');}
+}
+
+/* ??? Logical Nodes ?????????????????????????????????????????????????????? */
+async function loadProjectLNs() {
+  // Show all logical nodes for the project; the API supports getting by ldeviceId
+  // For a general view we can't get all at once without a ldeviceId. Show a help message.
+  const panel = document.getElementById('ln-list');
+  if (!panel) return;
+  panel.innerHTML = `<div class="empty-state">
+    <p>Select a Logical Device above to see its Logical Nodes, or use <strong>+ Add Logical Node</strong> to create one by specifying the LDevice ID.</p>
+  </div>`;
+}
+
+async function showLNsForLDevice(ldeviceId, ldName) {
+  const pid = S.project.id;
+  const panel = document.getElementById('ln-list');
+  if (!panel) return;
+  panel.innerHTML = loader();
+  try {
+    const list = await get(`/projects/${pid}/ldevices/${ldeviceId}/logicalnodes`);
+    let rows = '';
+    list.forEach(n=>{
+      rows += `<tr>
+        <td>${esc(n.prefix||'')} <strong>${esc(n.lnClass)}</strong> ${esc(n.inst)}</td>
+        <td>${esc(n.lnType)}</td>
+        <td>${esc(n.desc||'�')}</td>
+        <td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="showDOIPanel(${n.id},'${esc(n.lnClass+n.inst)}')">DOIs</button>
+          <button class="btn btn-ghost btn-sm" onclick="showEditLN(${JSON.stringify(JSON.stringify(n))})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteLN(${n.id},'${esc(n.lnClass+n.inst)}',${ldeviceId},'${esc(ldName)}')">Del</button>
+        </div></td>
+      </tr>`;
+    });
+    const header = document.querySelector('#ln-list')?.previousElementSibling?.querySelector('h2');
+    if(header) header.textContent = `Logical Nodes � ${ldName}`;
+    panel.innerHTML = list.length
+      ? `<table class="data-table"><thead><tr><th>LN Reference</th><th>LN Type</th><th>Desc</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>`
+      : emptyState('No logical nodes. Add one.');
+  }catch(e){toast(e.message,'error');}
+}
+
+function showCreateLN(ldeviceId) {
+  openModal('Add Logical Node', `
+    <div class="form-group"><label>LDevice ID *</label><input id="m-ldid" type="number" value="${ldeviceId||''}" placeholder="Logical Device ID" /></div>
+    <div class="form-group"><label>Prefix</label><input id="m-pfx" type="text" maxlength="11" placeholder="optional" /></div>
+    <div class="form-group"><label>LN Class *</label><input id="m-cls" type="text" maxlength="4" placeholder="e.g. XCBR" /></div>
+    <div class="form-group"><label>Inst *</label><input id="m-inst" type="text" maxlength="12" placeholder="e.g. 1" /></div>
+    <div class="form-group"><label>LN Type *</label><input id="m-lntype" type="text" placeholder="Reference to LNodeType id" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc"></textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Create', fn: async()=>{ try {
+       await post(`/projects/${S.project.id}/logicalnodes`, {
+         lDeviceId: +document.getElementById('m-ldid').value||undefined,
+         prefix: document.getElementById('m-pfx').value||undefined,
+         lnClass: document.getElementById('m-cls').value,
+         inst: document.getElementById('m-inst').value,
+         lnType: document.getElementById('m-lntype').value,
+         desc: document.getElementById('m-desc').value||undefined,
+       });
+       toast('Logical Node created','success'); closeModal();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+function showEditLN(dJson) {
+  const d = typeof dJson==='string'?JSON.parse(dJson):dJson;
+  openModal('Edit Logical Node', `
+    <div class="form-group"><label>Prefix</label><input id="m-pfx" value="${esc(d.prefix||'')}" maxlength="11" /></div>
+    <div class="form-group"><label>LN Class *</label><input id="m-cls" value="${esc(d.lnClass)}" maxlength="4" /></div>
+    <div class="form-group"><label>Inst *</label><input id="m-inst" value="${esc(d.inst)}" maxlength="12" /></div>
+    <div class="form-group"><label>LN Type *</label><input id="m-lntype" value="${esc(d.lnType)}" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc">${esc(d.desc||'')}</textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Save', fn: async()=>{ try {
+       await put(`/projects/${S.project.id}/logicalnodes/${d.id}`, { payload:{
+         lDeviceId: d.lDeviceId,
+         prefix: document.getElementById('m-pfx').value||undefined,
+         lnClass: document.getElementById('m-cls').value,
+         inst: document.getElementById('m-inst').value,
+         lnType: document.getElementById('m-lntype').value,
+         desc: document.getElementById('m-desc').value||undefined,
+       }, rowVersion: d.rowVersion });
+       toast('Logical Node updated','success'); closeModal();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+async function deleteLN(id, name, ldeviceId, ldName) {
+  if(!confirm(`Delete Logical Node "${name}"?`)) return;
+  try { await del(`/projects/${S.project.id}/logicalnodes/${id}`); toast('Deleted'); showLNsForLDevice(ldeviceId, ldName); }catch(e){toast(e.message,'error');}
+}
+
+/* ??? DOI / DAI ?????????????????????????????????????????????????????????? */
+async function showDOIPanel(lnId, lnRef) {
+  const pid = S.project.id;
+  setContent(loader());
+  setTopbar(`DOIs � ${lnRef}`, `<button class="btn btn-ghost btn-sm" onclick="ieds()">? Back to IEDs</button>`);
+  try {
+    const list = await get(`/projects/${pid}/dois?logicalNodeId=${lnId}`);
+    let rows = '';
+    list.forEach(d=>{
+      rows += `<tr>
+        <td><strong>${esc(d.name)}</strong></td>
+        <td>${d.ix??'�'}</td>
+        <td>${esc(d.accessControl||'�')}</td>
+        <td>${esc(d.desc||'�')}</td>
+        <td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="showDAIPanel(${d.id},'${esc(d.name)}')">DAIs</button>
+          <button class="btn btn-ghost btn-sm" onclick="showEditDOI(${JSON.stringify(JSON.stringify(d))},${lnId},'${esc(lnRef)}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteDOI(${d.id},'${esc(d.name)}',${lnId},'${esc(lnRef)}')">Del</button>
+        </div></td>
+      </tr>`;
+    });
+    setContent(`
+      <div class="breadcrumb"><span onclick="navigate('dashboard')">Dashboard</span><span class="sep">/</span><span onclick="ieds()">IEDs</span><span class="sep">/</span><span>${esc(lnRef)}</span><span class="sep">/</span><span>DOIs</span></div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Data Object Instances � ${esc(lnRef)}</h2>
+          <button class="btn btn-primary btn-sm" onclick="showCreateDOI(${lnId},'${esc(lnRef)}')">+ Add DOI</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          ${list.length ? `<table class="data-table"><thead><tr><th>Name</th><th>Ix</th><th>Access Control</th><th>Desc</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>` : emptyState('No DOIs. Add a Data Object Instance.')}
+        </div>
+      </div>`);
+  }catch(e){toast(e.message,'error');}
+}
+
+function showCreateDOI(lnId, lnRef) {
+  openModal('Add Data Object Instance (DOI)', `
+    <div class="form-group"><label>Name *</label><input id="m-name" maxlength="12" placeholder="e.g. Pos" /></div>
+    <div class="form-group"><label>Ix</label><input id="m-ix" type="number" placeholder="optional index" /></div>
+    <div class="form-group"><label>Access Control</label><input id="m-ac" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc"></textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Create DOI', fn: async()=>{ try {
+       await post(`/projects/${S.project.id}/dois`, {
+         logicalNodeId: lnId,
+         name: document.getElementById('m-name').value,
+         ix: document.getElementById('m-ix').value?+document.getElementById('m-ix').value:undefined,
+         accessControl: document.getElementById('m-ac').value||undefined,
+         desc: document.getElementById('m-desc').value||undefined,
+       });
+       toast('DOI created','success'); closeModal(); showDOIPanel(lnId, lnRef);
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+function showEditDOI(dJson, lnId, lnRef) {
+  const d = typeof dJson==='string'?JSON.parse(dJson):dJson;
+  openModal('Edit DOI', `
+    <div class="form-group"><label>Name *</label><input id="m-name" value="${esc(d.name)}" maxlength="12" /></div>
+    <div class="form-group"><label>Ix</label><input id="m-ix" type="number" value="${d.ix??''}" /></div>
+    <div class="form-group"><label>Access Control</label><input id="m-ac" value="${esc(d.accessControl||'')}" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc">${esc(d.desc||'')}</textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Save', fn: async()=>{ try {
+       await put(`/projects/${S.project.id}/dois/${d.id}`, { payload:{
+         logicalNodeId: d.logicalNodeId,
+         name: document.getElementById('m-name').value,
+         ix: document.getElementById('m-ix').value?+document.getElementById('m-ix').value:undefined,
+         accessControl: document.getElementById('m-ac').value||undefined,
+         desc: document.getElementById('m-desc').value||undefined,
+       }, rowVersion: d.rowVersion });
+       toast('DOI updated','success'); closeModal(); showDOIPanel(lnId, lnRef);
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+async function deleteDOI(id, name, lnId, lnRef) {
+  if(!confirm(`Delete DOI "${name}"?`)) return;
+  try { await del(`/projects/${S.project.id}/dois/${id}`); toast('Deleted'); showDOIPanel(lnId, lnRef); }catch(e){toast(e.message,'error');}
+}
+
+async function showDAIPanel(doiId, doiName) {
+  const pid = S.project.id;
+  setContent(loader());
+  setTopbar(`DAIs � ${doiName}`, `<button class="btn btn-ghost btn-sm" onclick="ieds()">? Back to IEDs</button>`);
+  try {
+    const list = await get(`/projects/${pid}/dois/${doiId}/dais`);
+    let rows = '';
+    list.forEach(d=>{
+      rows += `<tr>
+        <td><strong>${esc(d.name)}</strong></td>
+        <td>${esc(d.sAddr||'�')}</td>
+        <td>${esc(d.valKind||'�')}</td>
+        <td>${d.ix??'�'}</td>
+        <td>${d.valImport!=null?d.valImport?'Yes':'No':'�'}</td>
+        <td>${esc(d.desc||'�')}</td>
+        <td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="showEditDAI(${JSON.stringify(JSON.stringify(d))},${doiId},'${esc(doiName)}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteDAI(${d.id},'${esc(d.name)}',${doiId},'${esc(doiName)}')">Del</button>
+        </div></td>
+      </tr>`;
+    });
+    setContent(`
+      <div class="breadcrumb"><span onclick="navigate('dashboard')">Dashboard</span><span class="sep">/</span><span onclick="ieds()">IEDs</span><span class="sep">/</span><span>DOI: ${esc(doiName)}</span><span class="sep">/</span><span>DAIs</span></div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Data Attribute Instances � ${esc(doiName)}</h2>
+          <button class="btn btn-primary btn-sm" onclick="showCreateDAI(${doiId},'${esc(doiName)}')">+ Add DA</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          ${list.length ? `<table class="data-table"><thead><tr><th>Name</th><th>sAddr</th><th>ValKind</th><th>Ix</th><th>ValImport</th><th>Desc</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>` : emptyState('No DAIs. Add a Data Attribute Instance.')}
+        </div>
+      </div>`);
+  }catch(e){toast(e.message,'error');}
+}
+
+function showCreateDAI(doiId, doiName) {
+  openModal('Add Data Attribute Instance (DA)', `
+    <div class="form-group"><label>Name *</label><input id="m-name" maxlength="60" /></div>
+    <div class="form-group"><label>sAddr</label><input id="m-saddr" /></div>
+    <div class="form-group"><label>ValKind</label>
+      <select id="m-valkind"><option value="">�</option><option>Spec</option><option>Conf</option><option>RO</option><option>Set</option></select>
+    </div>
+    <div class="form-group"><label>Ix</label><input id="m-ix" type="number" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc"></textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Create DA', fn: async()=>{ try {
+       await post(`/projects/${S.project.id}/dais`, {
+         doiId,
+         name: document.getElementById('m-name').value,
+         sAddr: document.getElementById('m-saddr').value||undefined,
+         valKind: document.getElementById('m-valkind').value||undefined,
+         ix: document.getElementById('m-ix').value?+document.getElementById('m-ix').value:undefined,
+         desc: document.getElementById('m-desc').value||undefined,
+       });
+       toast('DAI created','success'); closeModal(); showDAIPanel(doiId, doiName);
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+function showEditDAI(dJson, doiId, doiName) {
+  const d = typeof dJson==='string'?JSON.parse(dJson):dJson;
+  openModal('Edit DAI', `
+    <div class="form-group"><label>Name *</label><input id="m-name" value="${esc(d.name)}" maxlength="60" /></div>
+    <div class="form-group"><label>sAddr</label><input id="m-saddr" value="${esc(d.sAddr||'')}" /></div>
+    <div class="form-group"><label>ValKind</label>
+      <select id="m-valkind"><option value="">�</option><option ${d.valKind==='Spec'?'selected':''}>Spec</option><option ${d.valKind==='Conf'?'selected':''}>Conf</option><option ${d.valKind==='RO'?'selected':''}>RO</option><option ${d.valKind==='Set'?'selected':''}>Set</option></select>
+    </div>
+    <div class="form-group"><label>Ix</label><input id="m-ix" type="number" value="${d.ix??''}" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc">${esc(d.desc||'')}</textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Save', fn: async()=>{ try {
+       await put(`/projects/${S.project.id}/dais/${d.id}`, { payload:{
+         doiId,
+         name: document.getElementById('m-name').value,
+         sAddr: document.getElementById('m-saddr').value||undefined,
+         valKind: document.getElementById('m-valkind').value||undefined,
+         ix: document.getElementById('m-ix').value?+document.getElementById('m-ix').value:undefined,
+         desc: document.getElementById('m-desc').value||undefined,
+       }, rowVersion: d.rowVersion });
+       toast('DAI updated','success'); closeModal(); showDAIPanel(doiId, doiName);
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+async function deleteDAI(id, name, doiId, doiName) {
+  if(!confirm(`Delete DAI "${name}"?`)) return;
+  try { await del(`/projects/${S.project.id}/dais/${id}`); toast('Deleted'); showDAIPanel(doiId, doiName); }catch(e){toast(e.message,'error');}
+}
+
+/* ???????????????????????????????????????????????????????????????????????????
+   SUBSTATION VIEW
+??????????????????????????????????????????????????????????????????????????? */
+async function substation() {
+  if (!S.project) { navigate('dashboard'); return; }
+  const pid = S.project.id;
+  setTopbar(`Substation � ${S.project.name}`, `<button class="btn btn-primary btn-sm" onclick="showCreateSubstation()">+ Add Substation</button>`);
+  setContent(loader());
+  try {
+    const list = await get(`/projects/${pid}/substations`);
+    let rows = '';
+    list.forEach(s=>{
+      rows += `<tr>
+        <td><strong>${esc(s.name)}</strong></td>
+        <td>${esc(s.desc||'�')}</td>
+        <td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="showVoltageLevels(${s.id},'${esc(s.name)}')">Voltage Levels</button>
+          <button class="btn btn-ghost btn-sm" onclick="showEditSubstation(${JSON.stringify(JSON.stringify(s))})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSubstation(${s.id},'${esc(s.name)}')">Del</button>
+        </div></td>
+      </tr>`;
+    });
+    setContent(`
+      <div class="breadcrumb"><span onclick="navigate('dashboard')">Dashboard</span><span class="sep">/</span><span>${esc(S.project.name)}</span><span class="sep">/</span><span>Substation</span></div>
+      <div class="card">
+        <div class="card-header"><h2>Substations</h2><span class="badge badge-blue">${list.length}</span></div>
+        <div class="card-body" style="padding:0">
+          ${list.length ? `<table class="data-table"><thead><tr><th>Name</th><th>Description</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>` : emptyState('No substations. Add your first substation.')}
+        </div>
+      </div>`);
+  }catch(e){toast(e.message,'error');}
+}
+
+function showCreateSubstation() {
+  openModal('Add Substation', `
+    <div class="form-group"><label>Name *</label><input id="m-name" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc"></textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Create', fn: async()=>{ try {
+       await post(`/projects/${S.project.id}/substations`,{name:document.getElementById('m-name').value,desc:document.getElementById('m-desc').value||undefined});
+       toast('Substation created','success'); closeModal(); substation();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+function showEditSubstation(sJson) {
+  const s = typeof sJson==='string'?JSON.parse(sJson):sJson;
+  openModal('Edit Substation', `
+    <div class="form-group"><label>Name *</label><input id="m-name" value="${esc(s.name)}" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc">${esc(s.desc||'')}</textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Save', fn: async()=>{ try {
+       await put(`/projects/${S.project.id}/substations/${s.id}`,{payload:{name:document.getElementById('m-name').value,desc:document.getElementById('m-desc').value||undefined},rowVersion:s.rowVersion});
+       toast('Substation updated','success'); closeModal(); substation();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+async function deleteSubstation(id,name){
+  if(!confirm(`Delete substation "${name}"?`)) return;
+  try{ await del(`/projects/${S.project.id}/substations/${id}`); toast('Deleted'); substation(); }catch(e){toast(e.message,'error');}
+}
+
+/* ??? Voltage Levels ????????????????????????????????????????????????????? */
+async function showVoltageLevels(subId, subName) {
+  const pid = S.project.id;
+  setContent(loader());
+  setTopbar(`Voltage Levels � ${subName}`, `<button class="btn btn-ghost btn-sm" onclick="substation()">? Back</button>`);
+  try {
+    const list = await get(`/projects/${pid}/substations/${subId}/voltagelevels`);
+    let rows = '';
+    list.forEach(v=>{
+      rows += `<tr>
+        <td><strong>${esc(v.name)}</strong></td>
+        <td>${v.voltageValue!=null?v.voltageValue+' '+(v.voltageMultiplier||''):'�'}</td>
+        <td>${v.nomFreq??'�'} Hz</td>
+        <td>${v.numPhases??'�'}</td>
+        <td>${esc(v.desc||'�')}</td>
+        <td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="showBays(${v.id},'${esc(v.name)}')">Bays</button>
+          <button class="btn btn-ghost btn-sm" onclick="showEditVL(${JSON.stringify(JSON.stringify(v))},${subId},'${esc(subName)}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteVL(${v.id},'${esc(v.name)}',${subId},'${esc(subName)}')">Del</button>
+        </div></td>
+      </tr>`;
+    });
+    setContent(`
+      <div class="breadcrumb"><span onclick="navigate('dashboard')">Dashboard</span><span class="sep">/</span><span onclick="substation()">Substation</span><span class="sep">/</span><span>${esc(subName)}</span></div>
+      <div class="card">
+        <div class="card-header"><h2>Voltage Levels � ${esc(subName)}</h2>
+          <button class="btn btn-primary btn-sm" onclick="showCreateVL(${subId},'${esc(subName)}')">+ Add Voltage Level</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          ${list.length ? `<table class="data-table"><thead><tr><th>Name</th><th>Voltage</th><th>Nom Freq</th><th>Phases</th><th>Desc</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>` : emptyState('No voltage levels.')}
+        </div>
+      </div>`);
+  }catch(e){toast(e.message,'error');}
+}
+
+function showCreateVL(subId, subName) {
+  openModal('Add Voltage Level', `
+    <div class="form-group"><label>Name *</label><input id="m-name" /></div>
+    <div class="form-group"><label>Voltage Value</label><input id="m-vv" type="number" step="0.001" /></div>
+    <div class="form-group"><label>Voltage Multiplier</label>
+      <select id="m-vm"><option value="">�</option><option>k</option><option>M</option><option>G</option></select></div>
+    <div class="form-group"><label>Nom Freq (Hz)</label><input id="m-freq" type="number" step="0.1" /></div>
+    <div class="form-group"><label>Num Phases</label><input id="m-ph" type="number" min="1" max="3" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc"></textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Create', fn: async()=>{ try {
+       await post(`/projects/${S.project.id}/voltagelevels`,{
+         substationId:subId,
+         name:document.getElementById('m-name').value,
+         voltageValue:document.getElementById('m-vv').value?+document.getElementById('m-vv').value:undefined,
+         voltageMultiplier:document.getElementById('m-vm').value||undefined,
+         nomFreq:document.getElementById('m-freq').value?+document.getElementById('m-freq').value:undefined,
+         numPhases:document.getElementById('m-ph').value?+document.getElementById('m-ph').value:undefined,
+         desc:document.getElementById('m-desc').value||undefined,
+       });
+       toast('Voltage Level created','success'); closeModal(); showVoltageLevels(subId, subName);
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+function showEditVL(vJson, subId, subName) {
+  const v = typeof vJson==='string'?JSON.parse(vJson):vJson;
+  openModal('Edit Voltage Level', `
+    <div class="form-group"><label>Name *</label><input id="m-name" value="${esc(v.name)}" /></div>
+    <div class="form-group"><label>Voltage Value</label><input id="m-vv" type="number" step="0.001" value="${v.voltageValue??''}" /></div>
+    <div class="form-group"><label>Nom Freq (Hz)</label><input id="m-freq" type="number" step="0.1" value="${v.nomFreq??''}" /></div>
+    <div class="form-group"><label>Num Phases</label><input id="m-ph" type="number" value="${v.numPhases??''}" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc">${esc(v.desc||'')}</textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Save', fn: async()=>{ try {
+       await put(`/projects/${S.project.id}/voltagelevels/${v.id}`,{payload:{
+         substationId:v.substationId,
+         name:document.getElementById('m-name').value,
+         voltageValue:document.getElementById('m-vv').value?+document.getElementById('m-vv').value:undefined,
+         nomFreq:document.getElementById('m-freq').value?+document.getElementById('m-freq').value:undefined,
+         numPhases:document.getElementById('m-ph').value?+document.getElementById('m-ph').value:undefined,
+         desc:document.getElementById('m-desc').value||undefined,
+       },rowVersion:v.rowVersion});
+       toast('Updated','success'); closeModal(); showVoltageLevels(subId, subName);
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+async function deleteVL(id,name,subId,subName){
+  if(!confirm(`Delete voltage level "${name}"?`)) return;
+  try{ await del(`/projects/${S.project.id}/voltagelevels/${id}`); toast('Deleted'); showVoltageLevels(subId,subName); }catch(e){toast(e.message,'error');}
+}
+
+/* ??? Bays ??????????????????????????????????????????????????????????????? */
+async function showBays(vlId, vlName) {
+  const pid = S.project.id;
+  setContent(loader());
+  setTopbar(`Bays � ${vlName}`, `<button class="btn btn-ghost btn-sm" onclick="substation()">? Back</button>`);
+  try {
+    const list = await get(`/projects/${pid}/voltagelevels/${vlId}/bays`);
+    let rows = '';
+    list.forEach(b=>{
+      rows += `<tr>
+        <td><strong>${esc(b.name)}</strong></td>
+        <td>${esc(b.desc||'�')}</td>
+        <td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="showEditBay(${JSON.stringify(JSON.stringify(b))},${vlId},'${esc(vlName)}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteBay(${b.id},'${esc(b.name)}',${vlId},'${esc(vlName)}')">Del</button>
+        </div></td>
+      </tr>`;
+    });
+    setContent(`
+      <div class="breadcrumb"><span onclick="navigate('dashboard')">Dashboard</span><span class="sep">/</span><span onclick="substation()">Substation</span><span class="sep">/</span><span>${esc(vlName)}</span><span class="sep">/</span><span>Bays</span></div>
+      <div class="card">
+        <div class="card-header"><h2>Bays � ${esc(vlName)}</h2>
+          <button class="btn btn-primary btn-sm" onclick="showCreateBay(${vlId},'${esc(vlName)}')">+ Add Bay</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          ${list.length ? `<table class="data-table"><thead><tr><th>Name</th><th>Description</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>` : emptyState('No bays. Add a bay.')}
+        </div>
+      </div>`);
+  }catch(e){toast(e.message,'error');}
+}
+
+function showCreateBay(vlId, vlName) {
+  openModal('Add Bay', `
+    <div class="form-group"><label>Name *</label><input id="m-name" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc"></textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Create', fn: async()=>{ try {
+       await post(`/projects/${S.project.id}/bays`,{voltageLevelId:vlId,name:document.getElementById('m-name').value,desc:document.getElementById('m-desc').value||undefined});
+       toast('Bay created','success'); closeModal(); showBays(vlId,vlName);
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+function showEditBay(bJson, vlId, vlName) {
+  const b = typeof bJson==='string'?JSON.parse(bJson):bJson;
+  openModal('Edit Bay', `
+    <div class="form-group"><label>Name *</label><input id="m-name" value="${esc(b.name)}" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc">${esc(b.desc||'')}</textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Save', fn: async()=>{ try {
+       await put(`/projects/${S.project.id}/bays/${b.id}`,{payload:{voltageLevelId:b.voltageLevelId,name:document.getElementById('m-name').value,desc:document.getElementById('m-desc').value||undefined},rowVersion:b.rowVersion});
+       toast('Updated','success'); closeModal(); showBays(vlId,vlName);
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+async function deleteBay(id,name,vlId,vlName){
+  if(!confirm(`Delete bay "${name}"?`)) return;
+  try{ await del(`/projects/${S.project.id}/bays/${id}`); toast('Deleted'); showBays(vlId,vlName); }catch(e){toast(e.message,'error');}
+}
+
+/* ???????????????????????????????????????????????????????????????????????????
+   COMMUNICATION VIEW
+??????????????????????????????????????????????????????????????????????????? */
+async function communication() {
+  if (!S.project) { navigate('dashboard'); return; }
+  const pid = S.project.id;
+  setTopbar(`Communication � ${S.project.name}`, `<button class="btn btn-primary btn-sm" onclick="showCreateSubNetwork()">+ Add SubNetwork</button>`);
+  setContent(loader());
+  try {
+    const list = await get(`/projects/${pid}/subnetworks`);
+    let rows = '';
+    list.forEach(n=>{
+      rows += `<tr>
+        <td><strong>${esc(n.name)}</strong></td>
+        <td>${esc(n.networkType||'�')}</td>
+        <td>${esc(n.desc||'�')}</td>
+        <td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="showEditSubNetwork(${JSON.stringify(JSON.stringify(n))})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSubNetwork(${n.id},'${esc(n.name)}')">Del</button>
+        </div></td>
+      </tr>`;
+    });
+    setContent(`
+      <div class="breadcrumb"><span onclick="navigate('dashboard')">Dashboard</span><span class="sep">/</span><span>${esc(S.project.name)}</span><span class="sep">/</span><span>Communication</span></div>
+      <div class="card">
+        <div class="card-header"><h2>Sub-Networks</h2><span class="badge badge-green">${list.length}</span></div>
+        <div class="card-body" style="padding:0">
+          ${list.length ? `<table class="data-table"><thead><tr><th>Name</th><th>Network Type</th><th>Description</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>` : emptyState('No sub-networks. Create one.')}
+        </div>
+      </div>`);
+  }catch(e){toast(e.message,'error');}
+}
+
+function showCreateSubNetwork() {
+  openModal('Add Sub-Network', `
+    <div class="form-group"><label>Name *</label><input id="m-name" /></div>
+    <div class="form-group"><label>Network Type</label><input id="m-ntype" placeholder="e.g. 8-MMS, IEC_61850-8-1" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc"></textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Create', fn: async()=>{ try {
+       // communicationId from project's SCL � use project.sclId or 0 as fallback
+       await post(`/projects/${S.project.id}/subnetworks`,{communicationId:0,name:document.getElementById('m-name').value,networkType:document.getElementById('m-ntype').value||undefined,desc:document.getElementById('m-desc').value||undefined});
+       toast('Sub-Network created','success'); closeModal(); communication();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+function showEditSubNetwork(nJson) {
+  const n = typeof nJson==='string'?JSON.parse(nJson):nJson;
+  openModal('Edit Sub-Network', `
+    <div class="form-group"><label>Name *</label><input id="m-name" value="${esc(n.name)}" /></div>
+    <div class="form-group"><label>Network Type</label><input id="m-ntype" value="${esc(n.networkType||'')}" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc">${esc(n.desc||'')}</textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Save', fn: async()=>{ try {
+       await put(`/projects/${S.project.id}/subnetworks/${n.id}`,{payload:{communicationId:n.communicationId,name:document.getElementById('m-name').value,networkType:document.getElementById('m-ntype').value||undefined,desc:document.getElementById('m-desc').value||undefined},rowVersion:n.rowVersion});
+       toast('Updated','success'); closeModal(); communication();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+async function deleteSubNetwork(id,name){
+  if(!confirm(`Delete sub-network "${name}"?`)) return;
+  try{ await del(`/projects/${S.project.id}/subnetworks/${id}`); toast('Deleted'); communication(); }catch(e){toast(e.message,'error');}
+}
+
+/* ???????????????????????????????????????????????????????????????????????????
+   DATA SETS VIEW
+??????????????????????????????????????????????????????????????????????????? */
+async function datasets() {
+  if (!S.project) { navigate('dashboard'); return; }
+  const pid = S.project.id;
+  setTopbar(`Data Sets � ${S.project.name}`, `<button class="btn btn-primary btn-sm" onclick="showCreateDataSet()">+ Add Data Set</button>`);
+  setContent(loader());
+  try {
+    const list = await get(`/projects/${pid}/datasets`);
+    let rows = '';
+    list.forEach(d=>{
+      rows += `<tr>
+        <td><strong>${esc(d.name)}</strong></td>
+        <td>${esc(d.desc||'�')}</td>
+        <td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="showEditDataSet(${JSON.stringify(JSON.stringify(d))})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteDataSet(${d.id},'${esc(d.name)}')">Del</button>
+        </div></td>
+      </tr>`;
+    });
+    setContent(`
+      <div class="breadcrumb"><span onclick="navigate('dashboard')">Dashboard</span><span class="sep">/</span><span>${esc(S.project.name)}</span><span class="sep">/</span><span>Data Sets</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+        <div class="card">
+          <div class="card-header"><h2>Report Control Blocks</h2></div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Report Control Blocks (RCBs) are managed per Logical Node via the IEDs section. Navigate to IED ? LDevice ? LN to configure RCBs.</p>
+            <button class="btn btn-ghost btn-sm" onclick="navigate('ieds')">Go to IEDs ?</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>GOOSE Control Blocks</h2></div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">GOOSE Control Blocks (GSE) are part of LN0 and managed per Logical Device. Navigate to IED ? LDevice to configure GSE controls.</p>
+            <button class="btn btn-ghost btn-sm" onclick="navigate('ieds')">Go to IEDs ?</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>Data Sets</h2><span class="badge badge-purple">${list.length}</span></div>
+        <div class="card-body" style="padding:0">
+          ${list.length ? `<table class="data-table"><thead><tr><th>Name</th><th>Description</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>` : emptyState('No data sets.')}
+        </div>
+      </div>`);
+  }catch(e){toast(e.message,'error');}
+}
+
+function showCreateDataSet() {
+  openModal('Add Data Set', `
+    <div class="form-group"><label>Name *</label><input id="m-name" maxlength="32" /></div>
+    <div class="form-group"><label>LN0 ID</label><input id="m-ln0" type="number" placeholder="Optional LN0 reference" /></div>
+    <div class="form-group"><label>Logical Node ID</label><input id="m-lnid" type="number" placeholder="Optional LN reference" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc"></textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Create', fn: async()=>{ try {
+       await post(`/projects/${S.project.id}/datasets`,{
+         name:document.getElementById('m-name').value,
+         ln0Id:document.getElementById('m-ln0').value?+document.getElementById('m-ln0').value:undefined,
+         logicalNodeId:document.getElementById('m-lnid').value?+document.getElementById('m-lnid').value:undefined,
+         desc:document.getElementById('m-desc').value||undefined,
+       });
+       toast('Data Set created','success'); closeModal(); datasets();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+function showEditDataSet(dJson) {
+  const d = typeof dJson==='string'?JSON.parse(dJson):dJson;
+  openModal('Edit Data Set', `
+    <div class="form-group"><label>Name *</label><input id="m-name" value="${esc(d.name)}" maxlength="32" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc">${esc(d.desc||'')}</textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Save', fn: async()=>{ try {
+       await put(`/projects/${S.project.id}/datasets/${d.id}`,{payload:{name:document.getElementById('m-name').value,desc:document.getElementById('m-desc').value||undefined},rowVersion:d.rowVersion});
+       toast('Updated','success'); closeModal(); datasets();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+async function deleteDataSet(id,name){
+  if(!confirm(`Delete data set "${name}"?`)) return;
+  try{ await del(`/projects/${S.project.id}/datasets/${id}`); toast('Deleted'); datasets(); }catch(e){toast(e.message,'error');}
+}
+
+/* ???????????????????????????????????????????????????????????????????????????
+   DATA TYPE TEMPLATES VIEW
+??????????????????????????????????????????????????????????????????????????? */
+async function datatypes() {
+  if (!S.project) { navigate('dashboard'); return; }
+  const pid = S.project.id;
+  setTopbar(`Data Type Templates � ${S.project.name}`, `<button class="btn btn-primary btn-sm" onclick="showCreateLNodeType()">+ Add LNodeType</button>`);
+  setContent(loader());
+  try {
+    const list = await get(`/projects/${pid}/lnodetypes`);
+    let rows = '';
+    list.forEach(t=>{
+      rows += `<tr>
+        <td><strong>${esc(t.sclId)}</strong></td>
+        <td><span class="badge badge-blue">${esc(t.lnClass)}</span></td>
+        <td>${esc(t.iedType||'�')}</td>
+        <td>${esc(t.desc||'�')}</td>
+        <td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="showEditLNodeType(${JSON.stringify(JSON.stringify(t))})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteLNodeType(${t.id},'${esc(t.sclId)}')">Del</button>
+        </div></td>
+      </tr>`;
+    });
+    setContent(`
+      <div class="breadcrumb"><span onclick="navigate('dashboard')">Dashboard</span><span class="sep">/</span><span>${esc(S.project.name)}</span><span class="sep">/</span><span>Data Type Templates</span></div>
+      <div class="card">
+        <div class="card-header"><h2>LNode Types</h2><span class="badge badge-purple">${list.length} types</span></div>
+        <div class="card-body" style="padding:0">
+          ${list.length ? `<table class="data-table"><thead><tr><th>ID</th><th>LN Class</th><th>IED Type</th><th>Description</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>` : emptyState('No LNodeTypes defined.')}
+        </div>
+      </div>`);
+  }catch(e){toast(e.message,'error');}
+}
+
+function showCreateLNodeType() {
+  openModal('Create LNodeType', `
+    <div class="form-group"><label>SCL ID *</label><input id="m-id" placeholder="e.g. XCBR_Type1" /></div>
+    <div class="form-group"><label>LN Class *</label><input id="m-cls" maxlength="4" placeholder="e.g. XCBR" /></div>
+    <div class="form-group"><label>IED Type</label><input id="m-iedtype" placeholder="optional" /></div>
+    <div class="form-group"><label>Data Type Templates ID</label><input id="m-dtid" type="number" placeholder="e.g. 1" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc"></textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Create', fn: async()=>{ try {
+       await post(`/projects/${S.project.id}/lnodetypes`,{
+         dataTypeTemplatesId:+document.getElementById('m-dtid').value||0,
+         sclId:document.getElementById('m-id').value,
+         lnClass:document.getElementById('m-cls').value,
+         iedType:document.getElementById('m-iedtype').value||undefined,
+         desc:document.getElementById('m-desc').value||undefined,
+       });
+       toast('LNodeType created','success'); closeModal(); datatypes();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+function showEditLNodeType(tJson) {
+  const t = typeof tJson==='string'?JSON.parse(tJson):tJson;
+  openModal('Edit LNodeType', `
+    <div class="form-group"><label>SCL ID *</label><input id="m-id" value="${esc(t.sclId)}" /></div>
+    <div class="form-group"><label>LN Class *</label><input id="m-cls" value="${esc(t.lnClass)}" maxlength="4" /></div>
+    <div class="form-group"><label>IED Type</label><input id="m-iedtype" value="${esc(t.iedType||'')}" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-desc">${esc(t.desc||'')}</textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'Save', fn: async()=>{ try {
+       await put(`/projects/${S.project.id}/lnodetypes/${t.id}`,{payload:{
+         dataTypeTemplatesId:0,
+         sclId:document.getElementById('m-id').value,
+         lnClass:document.getElementById('m-cls').value,
+         iedType:document.getElementById('m-iedtype').value||undefined,
+         desc:document.getElementById('m-desc').value||undefined,
+       },rowVersion:t.rowVersion});
+       toast('Updated','success'); closeModal(); datatypes();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+async function deleteLNodeType(id,name){
+  if(!confirm(`Delete LNodeType "${name}"?`)) return;
+  try{ await del(`/projects/${S.project.id}/lnodetypes/${id}`); toast('Deleted'); datatypes(); }catch(e){toast(e.message,'error');}
+}
+
+/* ???????????????????????????????????????????????????????????????????????????
+   AUDIT LOG VIEW
+??????????????????????????????????????????????????????????????????????????? */
+async function audit(entityType, entityId) {
+  if (!S.project) { navigate('dashboard'); return; }
+  const pid = S.project.id;
+  let url = `/projects/${pid}/audit`;
+  if (entityType) url += `?entityType=${entityType}`;
+  if (entityId)   url += `&entityId=${entityId}`;
+  setTopbar(`Audit Log � ${S.project.name}`, '');
+  setContent(loader());
+  try {
+    const list = await get(url);
+    let rows = '';
+    list.forEach(e=>{
+      rows += `<tr>
+        <td>${fmtDateTime(e.timestamp)}</td>
+        <td>${esc(e.username)}</td>
+        <td><span class="badge badge-gray">${esc(e.entityType)}</span></td>
+        <td>${e.entityId}</td>
+        <td><span class="badge ${e.operation==='Create'?'badge-green':e.operation==='Delete'?'badge-danger':'badge-blue'}">${esc(e.operation)}</span></td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.comment||'�')}</td>
+      </tr>`;
+    });
+    setContent(`
+      <div class="breadcrumb"><span onclick="navigate('dashboard')">Dashboard</span><span class="sep">/</span><span>${esc(S.project.name)}</span><span class="sep">/</span><span>Audit Log</span></div>
+      <div class="card">
+        <div class="card-header"><h2>Audit Log</h2><span class="badge badge-gray">${list.length} entries</span></div>
+        <div class="card-body" style="padding:0">
+          ${list.length ? `<table class="data-table"><thead><tr><th>Timestamp</th><th>User</th><th>Entity</th><th>ID</th><th>Operation</th><th>Comment</th></tr></thead><tbody>${rows}</tbody></table>` : emptyState('No audit entries.')}
+        </div>
+      </div>`);
+  }catch(e){toast(e.message,'error');}
+}
+
+/* ???????????????????????????????????????????????????????????????????????????
+   SAVE PROJECT
+??????????????????????????????????????????????????????????????????????????? */
+function showSaveProject() {
+  if (!S.project) return;
+  openModal('Save Project', `
+    <div class="form-group"><label>Project Name *</label><input id="m-pname" value="${esc(S.project.name)}" /></div>
+    <div class="form-group"><label>Description</label><textarea id="m-pdesc">${esc(S.project.description||'')}</textarea></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', fn:()=>closeModal() },
+     { label:'?? Save', fn: async()=>{ try {
+       const updated = await put(`/projects/${S.project.id}`,{
+         name:document.getElementById('m-pname').value,
+         description:document.getElementById('m-pdesc').value||undefined,
+         rowVersion:S.project.rowVersion,
+       });
+       S.project = updated;
+       document.getElementById('active-project-name').textContent = updated.name;
+       toast('Project saved','success'); closeModal();
+     }catch(e){toast(e.message,'error');}}}]);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   USER MANAGEMENT  (Admin only)
+═══════════════════════════════════════════════════════════════════════════ */
+
+// Role colours for avatars
+const ROLE_COLORS = { Admin: '#7c3aed', Editor: '#0891b2', Viewer: '#059669' };
+
+function roleColor(role) { return ROLE_COLORS[role] || '#64748b'; }
+
+function userInitials(u) {
+  return (u.fullName || u.username).split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+}
+
+async function users() {
+  if (S.user?.role !== 'Admin') { navigate('dashboard'); return; }
+  setTopbar('User Management', `<button class="btn btn-primary btn-sm" onclick="showCreateUser()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+    Add User
+  </button>`);
+  setContent(loader());
+  try {
+    const list = await get('/auth/users');
+    // Stats row
+    const total    = list.length;
+    const active   = list.filter(u => u.isActive).length;
+    const admins   = list.filter(u => u.role === 'Admin').length;
+    const editors  = list.filter(u => u.role === 'Editor').length;
+
+    let rows = '';
+    list.forEach(u => {
+      const isSelf   = u.id === S.user.id;
+      const initials = userInitials(u);
+      const color    = roleColor(u.role);
+      const roleBadge = u.role === 'Admin'
+        ? '<span class="badge badge-purple">Admin</span>'
+        : u.role === 'Editor'
+          ? '<span class="badge badge-blue">Editor</span>'
+          : '<span class="badge badge-gray">Viewer</span>';
+      const statusBadge = u.isActive
+        ? '<span class="badge badge-green">Active</span>'
+        : '<span class="badge badge-red">Inactive</span>';
+      const lastLogin = u.lastLoginAt ? fmtDateTime(u.lastLoginAt) : '<span style="color:var(--text-muted)">Never</span>';
+
+      rows += `<tr class="${isSelf ? 'user-row-self' : ''}">
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="user-mgmt-avatar" style="background:${color}">${esc(initials)}</div>
+            <div>
+              <div style="font-weight:700">${esc(u.username)}${isSelf ? ' <span class="tag">You</span>' : ''}</div>
+              <div style="font-size:11px;color:var(--text-muted)">${esc(u.fullName || '—')}</div>
+            </div>
+          </div>
+        </td>
+        <td>${esc(u.email || '—')}</td>
+        <td>${roleBadge}</td>
+        <td>${statusBadge}</td>
+        <td>${lastLogin}</td>
+        <td>${fmtDate(u.createdAt)}</td>
+        <td>
+          <div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="showEditUser(${JSON.stringify(JSON.stringify(u))})">Edit</button>
+            <button class="btn btn-ghost btn-sm" onclick="showResetPassword(${u.id},'${esc(u.username)}')">Reset Pwd</button>
+            ${!isSelf ? `<button class="toggle-btn ${u.isActive ? 'active' : 'inactive'}"
+              onclick="toggleUserActive(${u.id},${!u.isActive},'${esc(u.username)}')">
+              ${u.isActive ? '⏸ Deactivate' : '▶ Activate'}
+            </button>` : ''}
+          </div>
+        </td>
+      </tr>`;
+    });
+
+    setContent(`
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card">
+          <div class="s-label">Total Users</div>
+          <div class="s-value">${total}</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-label">Active</div>
+          <div class="s-value" style="color:var(--success)">${active}</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-label">Admins</div>
+          <div class="s-value" style="color:#7c3aed">${admins}</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-label">Editors</div>
+          <div class="s-value" style="color:#0891b2">${editors}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>System Users</h2>
+          <button class="btn btn-primary btn-sm" onclick="showCreateUser()">+ Add User</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          ${list.length
+            ? `<table class="data-table">
+                <thead>
+                  <tr>
+                    <th>User</th><th>Email</th><th>Role</th>
+                    <th>Status</th><th>Last Login</th><th>Created</th><th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+               </table>`
+            : emptyState('No users found.')}
+        </div>
+      </div>`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ── Create User ──────────────────────────────────────────────────────── */
+function showCreateUser() {
+  openModal('Add New User', `
+    <div class="form-group">
+      <label>Username *</label>
+      <input id="m-uname" type="text" maxlength="100" placeholder="e.g. john.doe" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label>Password *</label>
+      <input id="m-upwd" type="password" minlength="8" placeholder="Min. 8 characters" autocomplete="new-password" />
+    </div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input id="m-ufname" type="text" maxlength="200" placeholder="e.g. John Doe" />
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input id="m-uemail" type="email" maxlength="200" placeholder="e.g. john@example.com" />
+    </div>
+    <div class="form-group">
+      <label>Role *</label>
+      <select id="m-urole">
+        <option value="Viewer">Viewer — Read-only access</option>
+        <option value="Editor">Editor — Can create and edit</option>
+        <option value="Admin">Admin — Full access</option>
+      </select>
+    </div>`,
+    [{ label: 'Cancel', cls: 'btn-ghost', fn: () => closeModal() },
+     { label: 'Create User', fn: async () => {
+       const pwd = document.getElementById('m-upwd').value;
+       if (pwd.length < 8) { toast('Password must be at least 8 characters', 'error'); return; }
+       try {
+         await post('/auth/register', {
+           username: document.getElementById('m-uname').value.trim(),
+           password: pwd,
+           fullName: document.getElementById('m-ufname').value.trim() || undefined,
+           email:    document.getElementById('m-uemail').value.trim() || undefined,
+           role:     document.getElementById('m-urole').value,
+         });
+         toast('User created successfully', 'success');
+         closeModal();
+         users();
+       } catch (e) { toast(e.message, 'error'); }
+     }}]);
+}
+
+/* ── Edit User ────────────────────────────────────────────────────────── */
+function showEditUser(uJson) {
+  const u = typeof uJson === 'string' ? JSON.parse(uJson) : uJson;
+  const isSelf = u.id === S.user.id;
+  openModal(`Edit User — ${u.username}`, `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg);border-radius:10px;margin-bottom:20px">
+      <div class="user-mgmt-avatar" style="background:${roleColor(u.role)}">${esc(userInitials(u))}</div>
+      <div>
+        <div style="font-weight:700;font-size:15px">${esc(u.username)}</div>
+        <div style="font-size:12px;color:var(--text-muted)">ID #${u.id} · Joined ${fmtDate(u.createdAt)}</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input id="m-ufname" type="text" maxlength="200" value="${esc(u.fullName || '')}" />
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input id="m-uemail" type="email" maxlength="200" value="${esc(u.email || '')}" />
+    </div>
+    <div class="form-group">
+      <label>Role</label>
+      <select id="m-urole" ${isSelf ? 'disabled title="You cannot change your own role"' : ''}>
+        <option value="Viewer"  ${u.role==='Viewer' ?'selected':''}>Viewer — Read-only access</option>
+        <option value="Editor"  ${u.role==='Editor' ?'selected':''}>Editor — Can create and edit</option>
+        <option value="Admin"   ${u.role==='Admin'  ?'selected':''}>Admin — Full access</option>
+      </select>
+      ${isSelf ? '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">You cannot change your own role.</div>' : ''}
+    </div>`,
+    [{ label: 'Cancel', cls: 'btn-ghost', fn: () => closeModal() },
+     { label: 'Save Changes', fn: async () => {
+       try {
+         await put(`/auth/users/${u.id}`, {
+           role:     isSelf ? u.role : document.getElementById('m-urole').value,
+           fullName: document.getElementById('m-ufname').value.trim() || undefined,
+           email:    document.getElementById('m-uemail').value.trim() || undefined,
+         });
+         toast('User updated', 'success');
+         closeModal();
+         users();
+       } catch (e) { toast(e.message, 'error'); }
+     }}]);
+}
+
+/* ── Reset Password ───────────────────────────────────────────────────── */
+function showResetPassword(userId, username) {
+  openModal(`Reset Password — ${username}`, `
+    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px 14px;margin-bottom:18px;font-size:13px;color:#9a3412">
+      ⚠️ This will immediately invalidate the user's current session and any active tokens.
+    </div>
+    <div class="form-group">
+      <label>New Password *</label>
+      <input id="m-newpwd" type="password" minlength="8" placeholder="Min. 8 characters" autocomplete="new-password" />
+    </div>
+    <div class="form-group">
+      <label>Confirm Password *</label>
+      <input id="m-confirmpwd" type="password" minlength="8" placeholder="Re-enter new password" autocomplete="new-password" />
+    </div>`,
+    [{ label: 'Cancel', cls: 'btn-ghost', fn: () => closeModal() },
+     { label: 'Reset Password', cls: 'btn-danger', fn: async () => {
+       const pwd     = document.getElementById('m-newpwd').value;
+       const confirm = document.getElementById('m-confirmpwd').value;
+       if (pwd.length < 8)    { toast('Password must be at least 8 characters', 'error'); return; }
+       if (pwd !== confirm)   { toast('Passwords do not match', 'error'); return; }
+       try {
+         await put(`/auth/users/${userId}/reset-password`, { newPassword: pwd });
+         toast(`Password reset for ${username}`, 'success');
+         closeModal();
+       } catch (e) { toast(e.message, 'error'); }
+     }}]);
+}
+
+/* ── Toggle Active / Inactive ─────────────────────────────────────────── */
+async function toggleUserActive(userId, newActiveState, username) {
+  const action = newActiveState ? 'activate' : 'deactivate';
+  if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} user "${username}"?`)) return;
+  try {
+    await apiFetch(`/auth/users/${userId}/active?active=${newActiveState}`, { method: 'PUT' });
+    toast(`User ${username} ${newActiveState ? 'activated' : 'deactivated'}`,
+          newActiveState ? 'success' : 'info');
+    users();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════════════════ */
+(async () => {
+  if (S.token) {
+    try {
+      S.user = await get('/auth/me');
+      showApp();
+    } catch { logout(); }
+  }
+})();
+</script>
+</body>
+</html>
